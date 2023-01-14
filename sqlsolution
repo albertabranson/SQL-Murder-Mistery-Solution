@@ -1,0 +1,77 @@
+-- The solution to the murder mystery on https://mystery.knightlab.com/
+-- The story: 
+--  A crime has taken place and the detective needs your help. The detective gave you the crime scene report, but you somehow lost it. You vaguely remember that the crime was a ​murder​ that occurred sometime on ​Jan.15, 2018​ and that it took place in ​SQL City​. Start by retrieving the corresponding crime scene report from the police department’s database.
+--Finding the crime scene report:
+
+SELECT * FROM crime_scene_report
+WHERE date = 20180115 AND type = 'murder' AND city = 'SQL City';
+
+--Description: Security footage shows that there were 2 witnesses. The first witness lives at the last house on "Northwestern Dr". The second witness, named Annabel, lives somewhere on "Franklin Ave".
+
+--Finding witness #1:
+
+SELECT * FROM person
+WHERE address_street_name = 'Northwestern Dr'
+ORDER BY address_number DESC;
+
+--Finding witness #2:
+
+SELECT * FROM person
+WHERE address_street_name = 'Franklin Ave'
+AND name LIKE '%Annabel%';
+
+--Finding witnesses’ interviews:
+
+SELECT * FROM interview
+WHERE person_id = 14887 OR person_id = 16371;
+--"I heard a gunshot and then saw a man run out. He had a "Get Fit Now Gym" bag. The membership number on the bag started with "48Z". Only gold members have those bags. The man got into a car with a plate that included "H42W"".
+--"I saw the murder happen, and I recognized the killer from my gym when I was working out last week on January the 9th."
+
+--Finding the suspects that were at the gym at January 9th and had a membership number starting with “48Z”:
+
+SELECT * FROM get_fit_now_check_in
+WHERE check_in_date = 20180109  AND membership_id LIKE '%48Z%';
+
+--Finding the suspects names::
+
+SELECT membership_id, name FROM get_fit_now_check_in
+JOIN get_fit_now_member
+ON get_fit_now_check_in.membership_id = get_fit_now_member.id
+WHERE membership_id = '48Z7A' OR membership_id = '48Z55';
+
+SELECT id, name FROM person
+WHERE name = 'Jeremy Bowers' OR name = 'Joe Germuska';
+
+SELECT *
+FROM drivers_license
+WHERE plate_number LIKE '%H42W%';
+
+--–Trying to find interview from the 2 gym members and people with license_plates containing "H42W".
+
+SELECT *
+FROM interview
+WHERE person_id = '183779' OR person_id= '423327' OR person_id= '664760' OR person_id= '28819' OR person_id= '67318';
+--"I was hired by a woman with a lot of money. I don't know her name but I know she's around 5'5" (65") or 5'7" (67"). She has red hair and she drives a Tesla Model S. I know that she attended the SQL Symphony Concert 3 times in December 2017."
+
+--Jeremy Bowers is the murderer.
+--Congrats, you found the murderer! But wait, there's more... If you think you're up for a challenge, try querying the interview transcript of the murderer to find the real villain behind this crime. If you feel especially confident in your SQL skills, try to complete this final step with no more than 2 queries. Use this same INSERT statement with your new suspect to check your answer.
+
+--Trying to find the woman described above:
+
+SELECT name FROM person
+JOIN facebook_event_checkin ON person.id = facebook_event_checkin.person_id 
+JOIN drivers_license on person.license_id = drivers_license.id
+WHERE event_name = 'SQL Symphony Concert' 
+AND date LIKE '201712%' 
+AND car_make = 'Tesla'
+AND car_model = 'Model S' 
+AND height BETWEEN 65 and 67 
+AND hair_color = 'red' 
+AND gender='female'
+GROUP BY person.id having count(*) == 3 
+
+--The brains behind the murder: Miranda Priestly
+--Congrats, you found the brains behind the murder! Everyone in SQL City hails you as the greatest SQL detective of all time. Time to break out the champagne!
+
+
+
